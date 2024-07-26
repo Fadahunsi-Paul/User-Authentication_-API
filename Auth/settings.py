@@ -43,7 +43,8 @@ INSTALLED_APPS = [
 
     'account',
     'rest_framework',
-    'rest_framework_simplejwt'
+    'rest_framework_simplejwt',
+    'whitenoise.runserver_nostatic'
 ]
 
 MIDDLEWARE = [
