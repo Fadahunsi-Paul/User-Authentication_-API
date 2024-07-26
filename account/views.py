@@ -12,6 +12,8 @@ from django.utils.translation import gettext_lazy as _
 from .serializer import RegistrationSerializer,LoginSerializer,VerifyEmailSerializer
 from .utils import Util,user_email
 import jwt
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from django.conf import settings
 
 
@@ -81,9 +83,18 @@ class LoginViewset(viewsets.GenericViewSet):
         logout(request)
         return Response({'Message':_('Logout Successful')},status=status.HTTP_200_OK)
     
-class VerifyEmailViewSet(viewsets.ViewSet):
+class VerifyEmailViewSet(viewsets.GenericViewSet):
     serializer_class = VerifyEmailSerializer
 
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'token', 
+                openapi.IN_QUERY, 
+                description="The token for email verification", 
+                type=openapi.TYPE_STRING
+            )
+        ])
     @action(methods=['get'],detail=False,)
     def verify(self,request):
         token = request.GET.get('token')
