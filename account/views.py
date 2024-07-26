@@ -3,12 +3,11 @@ from django.urls import reverse
 from django.contrib.auth import login,logout,authenticate
 from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
-from rest_framework import viewsets,status
+from rest_framework import viewsets,status,views
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.validators import ValidationError
 from rest_framework.decorators import action
-from rest_framework_simplejwt.tokens import RefreshToken
 from django.utils.translation import gettext_lazy as _
 from .serializer import RegistrationSerializer,LoginSerializer,VerifyEmailSerializer
 from .utils import Util,user_email
@@ -18,11 +17,11 @@ from django.conf import settings
 
 User = get_user_model()
 
-class RegistrationViewSet(viewsets.ViewSet):
+class RegistrationViewSet(viewsets.GenericViewSet):
     serializer_class = RegistrationSerializer
 
     @action(detail=False,methods=['post'],permission_classes=[AllowAny])
-    def register(self,request):
+    def post(self,request):
         try:
             email            = request.data.get('email')
             password         = request.data.get('password','').strip()
@@ -55,7 +54,7 @@ class RegistrationViewSet(viewsets.ViewSet):
         return Response(_('Logout Successful'),status=status.HTTP_200_OK)
     
 
-class LoginViewset(viewsets.ViewSet):
+class LoginViewset(viewsets.GenericViewSet):
     serializer_class = LoginSerializer
 
     @action(detail=False,methods=['post'],permission_classes=[AllowAny])
