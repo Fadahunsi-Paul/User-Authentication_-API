@@ -29,6 +29,7 @@ SECRET_KEY = 'django-insecure-s_i)9()0$1c=&#^_9^2eyj#sb&6(ckk3w7yl#v(13_vkun01df
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
+CORS_ALLOW_ALL_ORIGINS = True
 
 
 # Application definition
@@ -42,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'account',
+    'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
     'whitenoise.runserver_nostatic'
