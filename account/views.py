@@ -23,7 +23,7 @@ class RegistrationViewSet(viewsets.GenericViewSet):
     serializer_class = RegistrationSerializer
 
     @action(detail=False,methods=['post'],permission_classes=[AllowAny])
-    def post(self,request):
+    def register(self,request):
         try:
             email            = request.data.get('email')
             password         = request.data.get('password','').strip()
