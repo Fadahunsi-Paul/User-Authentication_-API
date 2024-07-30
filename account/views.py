@@ -123,3 +123,9 @@ class VerifyEmailViewSet(viewsets.GenericViewSet):
         }
         token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
         return token
+    
+class PasswordResetEmail(viewsets.GenericViewSet):
+
+
+    def post(self,request):
+        ...

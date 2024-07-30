@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser,AbstractUser
 from django.utils.translation import gettext_lazy as _
 from .usermanager import UserManager
+from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
 # Create your models here.
 
@@ -26,3 +27,15 @@ class User(AbstractUser):
             'refresh': str(refresh),
             'access':str(refresh.access_token)
         }
+    
+
+class resetpassword(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Code {self.code} generated for {self.user}'
+
+    def valid_code(self):
+        return timezone.now() < self.created_at + timezone.timedelta(minutes=5)

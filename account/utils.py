@@ -1,5 +1,7 @@
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.urls import reverse
+import random
+from django.conf import settings
 from datetime import datetime,timedelta
 from django.core.mail import EmailMessage
 from django.contrib.sites.shortcuts import get_current_site
@@ -26,3 +28,13 @@ def user_email(request,user):
     data = {'email_body':email_body,'to_email':user.email,'Subject':'Verify Your Email'}
     Util.send_email(data)
 
+def generate_six_digit_code():
+    random.randint(100000, 999999)
+
+def send_reset_code(user,code):
+    subject= "Reset Password Code"
+    message= f'Use this code {code} to reset your password'
+    email_sender=settings.EMAIL_HOST_USER
+    email_reciever=[user.email]
+    send_email = [subject, message, email_sender, email_reciever]
+    

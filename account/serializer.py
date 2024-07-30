@@ -23,3 +23,9 @@ class VerifyEmailSerializer(serializers.Serializer):
     class Meta:
         model = User
         fields = ['token']
+
+class PasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField(min_length=10)
+
+    class Meta:
+        fields = ['email']
