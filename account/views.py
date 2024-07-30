@@ -10,7 +10,8 @@ from rest_framework.validators import ValidationError
 from rest_framework.decorators import action
 from django.utils.translation import gettext_lazy as _
 from .serializer import RegistrationSerializer,LoginSerializer,VerifyEmailSerializer
-from .utils import Util,user_email
+from .utils import (Util,user_email,
+                    )
 from datetime import datetime,timedelta
 import jwt
 from drf_yasg.utils import swagger_auto_schema
