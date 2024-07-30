@@ -7,6 +7,7 @@ from .usermanager import UserManager
 class User(AbstractUser):
     username = None
     email = models.EmailField(_('Email Address: '),unique=True,blank=False,null=False)
+    is_verified=models.BooleanField(default=False)
     date_joined = models.DateTimeField(verbose_name='Date Joined',auto_now_add=True)
     last_login = models.DateTimeField(verbose_name='Last Login',auto_now_add=True)
 

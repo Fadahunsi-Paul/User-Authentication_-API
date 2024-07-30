@@ -11,6 +11,7 @@ from rest_framework.decorators import action
 from django.utils.translation import gettext_lazy as _
 from .serializer import RegistrationSerializer,LoginSerializer,VerifyEmailSerializer
 from .utils import Util,user_email
+from datetime import datetime,timedelta
 import jwt
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -85,6 +86,7 @@ class LoginViewset(viewsets.GenericViewSet):
     
 class VerifyEmailViewSet(viewsets.GenericViewSet):
     serializer_class = VerifyEmailSerializer
+    permission_classes = [AllowAny]
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -100,7 +102,7 @@ class VerifyEmailViewSet(viewsets.GenericViewSet):
         token = request.GET.get('token')
 
         try:
-            email_token =jwt.decode(token,settings.SECRET_KEY)
+            email_token =jwt.decode(token,settings.SECRET_KEY,algorithms=["HS256"])
             user = User.objects.get(id=email_token['user_id'])
             if not user.is_verified:
                 user.is_verified=True
@@ -110,3 +112,13 @@ class VerifyEmailViewSet(viewsets.GenericViewSet):
             return Response({'Error':f'Email Activation Expired : {str(e)}'},status=status.HTTP_400_BAD_REQUEST)
         except jwt.exceptions.DecodeError as e:
             return Response({'Error':f'Invalid Token : {str(e)}'},status=status.HTTP_400_BAD_REQUEST)
+        
+    def generate_token(user):
+        expiration = datetime.utcnow() + timedelta(hours=24)  # Adjust the expiration time as needed
+        payload = {
+            'user_id': user.id,
+            'exp': expiration,
+            'iat': datetime.utcnow()
+        }
+        token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+        return token
