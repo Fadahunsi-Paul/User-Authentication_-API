@@ -3,21 +3,24 @@ from django.urls import reverse
 from django.contrib.auth import login,logout,authenticate
 from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
-from rest_framework import viewsets,status,views
+from rest_framework import viewsets,status,views,generics
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.validators import ValidationError
 from rest_framework.decorators import action
 from django.utils.translation import gettext_lazy as _
-from .serializer import RegistrationSerializer,LoginSerializer,VerifyEmailSerializer
-from .utils import (Util,user_email,
+from .serializer import (RegistrationSerializer,LoginSerializer,VerifyEmailSerializer,
+                         PasswordResetSerializer)
+from .utils import (Util,user_email,generate_six_digit_code,
+                    send_reset_code
                     )
 from datetime import datetime,timedelta
 import jwt
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.conf import settings
-
+from .models import ResetPassword
 
 User = get_user_model()
 
@@ -124,8 +127,52 @@ class VerifyEmailViewSet(viewsets.GenericViewSet):
         token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
         return token
     
-class PasswordResetEmail(viewsets.GenericViewSet):
+class RequestPasswordResetEmail(APIView):
+    permission_classes = [AllowAny]
 
 
     def post(self,request):
-        ...
+        email = request.data.get('email')
+        
+        if not email:
+            return Response({'Error':_('All inputs must be provided')},status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'User with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+        code = generate_six_digit_code()
+        ResetPassword.objects.create(user=user, code=code)
+        send_reset_code(user, code)
+        return Response({'message': 'Password reset code sent to your email.'}, status=status.HTTP_200_OK)
+    
+class VerifyPasswordReset(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = PasswordResetSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        email = serializer.validated_data['email']
+        code = serializer.validated_data['code']
+        new_password = serializer.validated_data['new_password']
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'User with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            reset_code = ResetPassword.objects.get(user=user, code=code)
+        except ResetPassword.DoesNotExist:
+            return Response({'error': 'Invalid reset code'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not reset_code.is_valid():
+            return Response({'error': 'Reset code has expired'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+        reset_code.delete()  # Delete the reset code after successful password reset
+
+        return Response({'message': 'Password has been reset successfully'}, status=status.HTTP_200_OK)
