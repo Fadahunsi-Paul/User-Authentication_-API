@@ -3,9 +3,10 @@ from django.urls import reverse
 import random
 from django.conf import settings
 from datetime import datetime,timedelta
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage,send_mail
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.auth import get_user_model
+
 
 # user=get_user_model()
 
@@ -29,11 +30,11 @@ def user_email(request,user):
     Util.send_email(data)
 
 def generate_six_digit_code():
-    str(random.randint(100000, 999999))
+    return str(random.randint(100000, 999999))
 
 def send_reset_code(user,code):
     subject= "Reset Password Code"
     message= f'Use this code {code} to reset your password'
     email_sender=settings.EMAIL_HOST_USER
     email_reciever=[user.email]
-    send_email = [subject, message, email_sender, email_reciever]
+    send_mail(subject, message, email_sender, email_reciever)
