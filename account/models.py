@@ -31,11 +31,11 @@ class User(AbstractUser):
 
 class ResetPassword(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    code = models.CharField(max_length=6)
+    code = models.CharField(max_length=6,null=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f'Code {self.code} generated for {self.user}'
 
-    def valid_code(self):
+    def is_valid(self):
         return timezone.now() < self.created_at + timezone.timedelta(minutes=5)

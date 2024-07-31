@@ -1,4 +1,4 @@
-from .models import User
+from .models import User,ResetPassword
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 
@@ -24,10 +24,17 @@ class VerifyEmailSerializer(serializers.Serializer):
         model = User
         fields = ['token']
 
+class RequestPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField(min_length=10)
+
+    class Meta:
+        fields = ['email']
+
 class PasswordResetSerializer(serializers.Serializer):
     email = serializers.EmailField(min_length=10)
     code = serializers.CharField(max_length=6)
     new_password = serializers.CharField(write_only=True,validators=[validate_password],required=True)
 
     class Meta:
-        fields = ['email']
+        model = ResetPassword
+        fields = ['email','code']

@@ -11,5 +11,6 @@ router.register(r'',LoginViewset,basename='login')
 urlpatterns = [
     path('',include(router.urls)),
     path('verify-email',VerifyEmailViewSet.as_view({'get':'verify'}),name='verify-email'),
-    path('request-password-rest/',RequestPasswordResetEmail.as_view(),name='request-password-reset')
+    path('request-password-reset/',RequestPasswordResetEmail.as_view(),name='request-password-reset'),
+    path('password-reset/',VerifyPasswordReset.as_view(),name='password-reset')
 ]

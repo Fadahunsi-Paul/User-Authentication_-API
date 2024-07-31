@@ -11,7 +11,7 @@ from rest_framework.validators import ValidationError
 from rest_framework.decorators import action
 from django.utils.translation import gettext_lazy as _
 from .serializer import (RegistrationSerializer,LoginSerializer,VerifyEmailSerializer,
-                         PasswordResetSerializer)
+                         PasswordResetSerializer,RequestPasswordSerializer)
 from .utils import (Util,user_email,generate_six_digit_code,
                     send_reset_code
                     )
@@ -127,33 +127,125 @@ class VerifyEmailViewSet(viewsets.GenericViewSet):
         token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
         return token
     
-class RequestPasswordResetEmail(APIView):
-    permission_classes = [AllowAny]
+# class RequestPasswordResetEmail(generics.GenericAPIView):
+#     permission_classes = [AllowAny]
+#     serializer_class = RequestPasswordSerializer
+  
 
-
-    def post(self,request):
-        email = request.data.get('email')
+#     @swagger_auto_schema(
+#         request_body=openapi.Schema(
+#             type=openapi.TYPE_OBJECT,
+#             properties={
+#                 'email': openapi.Schema(type=openapi.TYPE_STRING, description='User email'),
+#             },
+#             required=['email']
+#         ),
+#         responses={
+#             200: openapi.Response('Password reset code sent to your email.'),
+#             400: openapi.Response('Bad Request'),
+#             404: openapi.Response('Not Found')
+#         }
+#     )
+#     def post(self,request):
+#         email = request.data.get('email')
         
-        if not email:
-            return Response({'Error':_('All inputs must be provided')},status=status.HTTP_400_BAD_REQUEST)
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            return Response({'error': 'User with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
+#         if not email:
+#             return Response({'Error':_('All inputs must be provided')},status=status.HTTP_400_BAD_REQUEST)
+#         try:
+#             user = User.objects.get(email=email)
+#         except User.DoesNotExist:
+#             return Response({'error': 'User with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
-        code = generate_six_digit_code()
-        ResetPassword.objects.create(user=user, code=code)
-        send_reset_code(user, code)
-        return Response({'message': 'Password reset code sent to your email.'}, status=status.HTTP_200_OK)
-    
+#         code = generate_six_digit_code()
+#         ResetPassword.objects.create(user=user, code=code)
+#         send_reset_code(user, code)
+#         return Response({'message': 'Password reset code sent to your email.'}, status=status.HTTP_200_OK)
+
+class RequestPasswordResetEmail(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = RequestPasswordSerializer
+
+    @swagger_auto_schema(
+        request_body=RequestPasswordSerializer,
+        responses={
+            200: openapi.Response('Password reset code sent to your email.'),
+            400: openapi.Response('Bad Request'),
+            404: openapi.Response('Not Found')
+        }
+    )
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                return Response({'error': 'User with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+            code = generate_six_digit_code()  # Ensure this function generates a 6-digit code
+            ResetPassword.objects.create(user=user, code=code)
+            send_reset_code(user, code)  # Ensure this function sends an email with the code
+
+            return Response({'message': 'Password reset code sent to your email.'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# class VerifyPasswordReset(generics.GenericAPIView):
+#     permission_classes = [AllowAny]
+#     serializer_class = PasswordResetSerializer
+
+#     @swagger_auto_schema(
+#         request_body=PasswordResetSerializer,
+#         responses={
+#             200: openapi.Response('Password has been reset successfully.'),
+#             400: openapi.Response('Bad Request'),
+#             404: openapi.Response('Not Found')
+#         }
+#     )
+
+#     def post(self, request):
+#         serializer = self.serializer_class(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+        
+#         email = serializer.validated_data['email']
+#         code = serializer.validated_data['code']
+#         new_password = serializer.validated_data['new_password']
+
+#         try:
+#             user = User.objects.get(email=email)
+#         except User.DoesNotExist:
+#             return Response({'error': 'User with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+#         try:
+#             reset_code = ResetPassword.objects.get(user=user, code=code)
+#         except ResetPassword.DoesNotExist:
+#             return Response({'error': 'Invalid reset code'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         if not reset_code.is_valid():
+#             return Response({'error': 'Reset code has expired'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         user.set_password(new_password)
+#         user.save()
+#         reset_code.delete()  # Delete the reset code after successful password reset
+
+#         return Response({'message': 'Password has been reset successfully'}, status=status.HTTP_200_OK)
+
+
 class VerifyPasswordReset(generics.GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = PasswordResetSerializer
 
+    @swagger_auto_schema(
+        request_body=PasswordResetSerializer,
+        responses={
+            200: openapi.Response('Password has been reset successfully.'),
+            400: openapi.Response('Bad Request'),
+            404: openapi.Response('Not Found')
+        }
+    )
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
+
         email = serializer.validated_data['email']
         code = serializer.validated_data['code']
         new_password = serializer.validated_data['new_password']

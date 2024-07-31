@@ -29,7 +29,7 @@ def user_email(request,user):
     Util.send_email(data)
 
 def generate_six_digit_code():
-    random.randint(100000, 999999)
+    str(random.randint(100000, 999999))
 
 def send_reset_code(user,code):
     subject= "Reset Password Code"
@@ -37,4 +37,3 @@ def send_reset_code(user,code):
     email_sender=settings.EMAIL_HOST_USER
     email_reciever=[user.email]
     send_email = [subject, message, email_sender, email_reciever]
-    
